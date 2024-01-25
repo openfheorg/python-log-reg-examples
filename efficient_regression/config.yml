@@ -7,13 +7,13 @@ crypto_params:
   keyswitch_method: "HYBRID"
   64_scaling_mod_size: 59
   64_first_mod: 60
-  run_bootstrap: true
+  run_bootstrap: false
   mult_depth: 13  # Overwritten if we run_bootstrap
   num_slots: false
-  ring_dimensionality: 131072  # 1 << 17
   num_large_digits: 0
   max_relin_sk_deg: 1
-  batch_size: 65536  # ring_dimensionality / 2
+  ring_dimensionality: 65536 #131072  # 1 << 17
+  batch_size: 32768  # ring_dimensionality / 2
   security_level: HEStd_128_classic
 
 # If run_bootstrap above is false, we do not use the following block
@@ -34,7 +34,8 @@ chebyshev_params:
 
 ml_params:
   batch_size: 256
-  lr: 0.025
+  lr_gamma: 0.1
+  lr_eta: 0.1
   epochs: 200
 
   # Note: this trains on the reduced dataset of 1024 for the purposes of this demo.

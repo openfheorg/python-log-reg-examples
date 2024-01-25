@@ -17,9 +17,9 @@ import yaml
 import numpy as np
 
 from efficient_regression.crypto_utils import create_crypto
-from efficient_regression.lr_train_funcs import encrypted_log_reg_calculate_gradient
+from efficient_regression.lr_train_funcs import encrypted_log_reg_calculate_gradient, compute_loss
 from efficient_regression.utils import next_power_of_2, collate_one_d_mat_to_ct, mat_to_ct_mat_row_major, \
-    one_d_mat_to_vec_col_cloned_ct
+    one_d_mat_to_vec_col_cloned_ct, get_raw_value_from_ct
 
 np.random.seed(42)
 
@@ -96,7 +96,8 @@ if __name__ == '__main__':
         logger.debug(config["crypto_bootstrap_params"])
     ml_conf = config["ml_params"]
     batch_size = ml_conf["batch_size"]
-    lr = ml_conf["lr"]
+    lr_gamma = ml_conf["lr_gamma"]
+    lr_eta = ml_conf["lr_eta"]
     epochs = ml_conf["epochs"]
 
     x_train, y_train, x_test, y_test = load_data(ml_conf["x_file"], ml_conf["y_file"], ml_conf["data_pct"])
@@ -124,7 +125,7 @@ if __name__ == '__main__':
     # Optimization: reduces the mult depth by 1
     # NOTE: we don't actually do the transpose. This is because when we use it later on
     #   we treat it as a col matrix, as opposed to a row matrix.
-    neg_x_train_T = -1 * x_train
+    neg_x_train_T = -1 * x_train * (lr_gamma / len(x_train))
 
     logger.debug("Generating the Sum keys")
     eval_sum_row_keys = cc.EvalSumRowsKeyGen(kp.secretKey, rowSize=padded_row_size)
@@ -228,11 +229,6 @@ if __name__ == '__main__':
             cheb_range_end=config["chebyshev_params"]["upper_bound"],
             cheb_poly_degree=config["chebyshev_params"]["polynomial_degree"],
         )
-
-        if config["RUN_IN_DEBUG"]:
-            
-            logger.debug("Loss: {}")
-
         ################################################
         # Note: Formulation of NAG update based on
         #   https://eprint.iacr.org/2018/462.pdf, Algorithm 1 and
@@ -250,10 +246,21 @@ if __name__ == '__main__':
             ct_theta = cc.EvalAdd(
                 ct_phi_prime,
                 cc.EvalMult(
-                    lr,
+                    lr_eta,
                     cc.EvalSub(ct_phi_prime, ct_phi)
                 )
             )
+
+        ct_phi = ct_phi_prime
+
+        if config["RUN_IN_DEBUG"]:
+            clear_theta = get_raw_value_from_ct(cc, ct_theta, kp, original_num_features)
+            loss = compute_loss(beta=clear_theta, X=x_train, y=y_train)
+
+            clear_phi = get_raw_value_from_ct(cc, ct_phi, kp, original_num_features)
+            print(f"Theta: {clear_theta}")
+            print(f"Phi: {clear_phi}")
+            logger.debug(f"Loss: {loss}")
 
         # Repacking the two ciphertexts back into a single ciphertext
         ct_theta = cc.EvalMult(ct_theta, theta_mask)

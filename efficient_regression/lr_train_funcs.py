@@ -61,13 +61,20 @@ def return_depth(ct: CT):
     # https://github.com/openfheorg/openfhe-logreg-training-examples/blob/main/lr_train_funcs.cpp#L187
     mult_depth = ct.GetLevel()
 
+def logistic_function(x):    
+    return 1/ (1 + np.exp(-x))
 
 # TODO: convert compute_loss https://github.com/openfheorg/openfhe-logreg-training-examples/blob/main/lr_train_funcs.cpp#L194
 def compute_loss(
         beta: List,
-        X: List,
-        y: List
+        X: np.ndarray,
+        y: np.ndarray
 ):
     # Plaintext loss computation that is based on https://stackoverflow.com/a/47798689/18031872
+    beta = np.asarray(beta)
     num_samples = len(X)
-    pass
+    y_pred = logistic_function(X.dot(beta))
+    _y = y.squeeze()
+    error = (_y * np.log(y_pred)) + ((1 - _y) * np.log(1 - y_pred))
+    cost = -1 / num_samples * sum(error)
+    return cost

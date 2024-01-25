@@ -8,6 +8,10 @@ from efficient_regression.enc_matrix import get_vec_col_cloned, get_vec_row_clon
 CT = openfhe.Ciphertext
 CC = openfhe.CryptoContext
 
+def get_raw_value_from_ct(cc, ct, kp, length):
+    loss_pt_beta: openfhe.Plaintext = cc.Decrypt(ct, kp.secretKey)
+    loss_pt_beta.SetLength(length)
+    return loss_pt_beta.GetRealPackedValue()
 
 
 def next_power_of_2(x):
