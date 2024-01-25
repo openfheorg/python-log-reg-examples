@@ -1,0 +1,21 @@
+crypto_params:
+  128_scaling_mod_size: 78
+  128_first_mod: 89
+  128_rescale_method: "FIXEDAUTO"
+  64_scaling_mod_size: 59
+  64_first_mod: 60
+  64_rescale_method: "FLEXIBLEAUTO"
+  run_bootstrap: false
+  mult_depth: 12  # Overwritten if we run_bootstrap
+  num_slots: false
+
+crypto_bootstrap_params:
+  level_budget: [ 4, 4 ]
+  levels_after_bootstrap: 6
+  secret_key_dist: "UNIFORM_TERNARY"
+
+
+ml_params:
+  batch_size: 256
+  lr: 0.025
+  epochs: 5
