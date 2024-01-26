@@ -14,8 +14,8 @@ crypto_params:
   max_relin_sk_deg: 1
 
   # TODO: swap out the values below
-  ring_dimensionality: 65536 #131072  # 1 << 17
-  batch_size: 32768  # ring_dimensionality / 2
+  ring_dimensionality: 131072 #131072  # 1 << 17
+  batch_size: 65536  # ring_dimensionality / 2
   security_level: HEStd_NotSet #HEStd_128_classic
 
 # If run_bootstrap above is false, we do not use the following block
