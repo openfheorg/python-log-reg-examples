@@ -68,7 +68,7 @@ def generate_nag_mask(
     phi_mask = [0 for _ in range(num_slots)]
 
     for i in range(num_slots):
-        if (i / padded_row_size) % 2 == 0:
+        if (i // padded_row_size) % 2 == 0:
             theta_mask[i] = 1
         else:
             phi_mask[i] = 1
@@ -95,7 +95,6 @@ if __name__ == '__main__':
         logger.info("Running with Bootstrap")
         logger.debug(config["crypto_bootstrap_params"])
     ml_conf = config["ml_params"]
-    batch_size = ml_conf["batch_size"]
     lr_gamma = ml_conf["lr_gamma"]
     lr_eta = ml_conf["lr_eta"]
     epochs = ml_conf["epochs"]
@@ -165,7 +164,7 @@ if __name__ == '__main__':
     num_features_enc = next_power_of_2(original_num_features)
     num_slots_boot= num_features_enc * 8
     if config["crypto_params"]["run_bootstrap"]:
-        logger.debug("Enabling FHE features for bootstrap")
+        logger.info("Enabling FHE features for bootstrap")
         bootstrap_hparams = config["crypto_bootstrap_params"]
         level_budget = bootstrap_hparams["level_budget"]
         bsgs_dim = bootstrap_hparams["bsgs_dim"]
@@ -177,7 +176,7 @@ if __name__ == '__main__':
 
     for curr_epoch in range(epochs):
 
-        print(f"************************************************************\nIteration: {curr_epoch}")
+        # print(f"************************************************************\nIteration: {curr_epoch}")
 
         if curr_epoch > 0:
             # Bootstrapping
@@ -228,6 +227,7 @@ if __name__ == '__main__':
             cheb_range_start=config["chebyshev_params"]["lower_bound"],
             cheb_range_end=config["chebyshev_params"]["upper_bound"],
             cheb_poly_degree=config["chebyshev_params"]["polynomial_degree"],
+            kp=kp
         )
         ################################################
         # Note: Formulation of NAG update based on
@@ -254,13 +254,17 @@ if __name__ == '__main__':
         ct_phi = ct_phi_prime
 
         if config["RUN_IN_DEBUG"]:
+
             clear_theta = get_raw_value_from_ct(cc, ct_theta, kp, original_num_features)
             loss = compute_loss(beta=clear_theta, X=x_train, y=y_train)
 
             clear_phi = get_raw_value_from_ct(cc, ct_phi, kp, original_num_features)
-            print(f"Theta: {clear_theta}")
-            print(f"Phi: {clear_phi}")
-            logger.debug(f"Loss: {loss}")
+
+            clear_grads = get_raw_value_from_ct(cc, ct_gradient, kp, original_num_features * 2)
+            logger.debug(f"Grad: {clear_grads}")
+            logger.debug(f"Theta: {clear_theta}")
+            logger.debug(f"Phi: {clear_phi}")
+            logger.info(f"Iteration: {curr_epoch} Loss: {loss}")
 
         # Repacking the two ciphertexts back into a single ciphertext
         ct_theta = cc.EvalMult(ct_theta, theta_mask)
