@@ -21,7 +21,7 @@ crypto_params:
 # If run_bootstrap above is false, we do not use the following block
 crypto_bootstrap_params:
   level_budget: [ 2, 2 ]
-  levels_before_bootstrap_128bit: 14
+  levels_before_bootstrap_128bit: 15
   levels_before_bootstrap_64bit: 16
   approx_bootstrap_depth: 8
   secret_key_dist: "UNIFORM_TERNARY"
