@@ -10,16 +10,18 @@ crypto_params:
   run_bootstrap: true
   mult_depth: 13  # Overwritten if we run_bootstrap
   num_slots: false
-  ring_dimensionality: 131072  # 1 << 17
   num_large_digits: 0
   max_relin_sk_deg: 1
+
+  # TODO: swap out the values below
+  ring_dimensionality: 131072 #131072  # 1 << 17
   batch_size: 65536  # ring_dimensionality / 2
-  security_level: HEStd_128_classic
+  security_level: HEStd_NotSet #HEStd_128_classic
 
 # If run_bootstrap above is false, we do not use the following block
 crypto_bootstrap_params:
   level_budget: [ 2, 2 ]
-  levels_before_bootstrap_128bit: 14
+  levels_before_bootstrap_128bit: 15
   levels_before_bootstrap_64bit: 16
   approx_bootstrap_depth: 8
   secret_key_dist: "UNIFORM_TERNARY"
@@ -34,8 +36,9 @@ chebyshev_params:
 
 ml_params:
   batch_size: 256
-  lr: 0.025
-  epochs: 200
+  lr_gamma: 0.1
+  lr_eta: 0.1
+  epochs: 100
 
   # Note: this trains on the reduced dataset of 1024 for the purposes of this demo.
   #   To get the full training dataset you should use "train_data/X_norm_37264.csv"
@@ -44,5 +47,5 @@ ml_params:
   y_file: "../data/y_1024.csv"
   data_pct: 0.8  # Train on 80pct of the data and test on remaining 20%
 
-logging_level: DEBUG
+logging_level: INFO
 RUN_IN_DEBUG: true
