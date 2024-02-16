@@ -127,5 +127,3 @@ def train(
             weights.bootstrap_self()
         else:
             weights.recrypt_self()
-
-

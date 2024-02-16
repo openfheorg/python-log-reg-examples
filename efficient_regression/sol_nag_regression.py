@@ -1,11 +1,5 @@
 ################################################
-# Runner code for the naive implementation of regression
-#   Note: this only runs on a minimal dataset to serve as a proof-of-concept
-#   the correctness is benchmarked against a numpy implementation
-#
-#   This should not be misconstrued as a:
-#       representative example
-#       performance benchmark
+# Solution for NAG logistic regression exercise
 ################################################
 
 from pprint import pprint
@@ -31,21 +25,9 @@ import logging
 def load_data(x_file, y_file, pct_train_on=0.9) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     Xs = pd.read_csv(x_file).to_numpy()
     ys = pd.read_csv(y_file).to_numpy()
-    # TODO: replace this....
     return Xs, ys, Xs, ys
 
-    # total_size = len(Xs)
-    #
-    # idx_arr = np.arange(total_size)
-    # np.random.shuffle(idx_arr)
-    # train_idxs = idx_arr[:int(total_size * pct_train_on)]
-    # test_idxs = idx_arr[int(total_size * pct_train_on):]
-
-    # return Xs[train_idxs], ys[train_idxs], Xs[test_idxs], ys[test_idxs]
-
-
 def generate_nag_mask(
-        original_num_features,
         padded_row_size,
         padded_col_size,
         num_slots: int,

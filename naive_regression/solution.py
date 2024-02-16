@@ -1,13 +1,3 @@
-################################################
-# Runner code for the naive implementation of a linear regression
-#   Note: this only runs on a minimal dataset to serve as a proof-of-concept
-#   the correctness is benchmarked against a numpy implementation
-#
-#   This should not be misconstrued as a:
-#       representative example
-#       performance benchmark
-################################################
-
 from pprint import pprint
 
 import openfhe
@@ -102,15 +92,19 @@ if __name__ == '__main__':
     lr = ml_conf["lr"]
     epochs = ml_conf["epochs"]
 
+    ################################################
+    # Generate data
+    ################################################
+
     X = np.random.rand(batch_size * 5, 5)
     y = (np.dot(X, np.random.rand(5, 1))) + np.random.rand(1)
     noise = np.random.randn(y.shape[0], y.shape[1])
     y = y + noise
 
-    weight = np.random.rand(5, 1)
+    weights = np.random.rand(5, 1)
     print("#" * 10)
     print("Plaintext Performance")
-    m_stat = train(X, y, weight, lr, epochs)
+    m_stat = train(X, y, weights, lr, epochs)
 
     print("#" * 10)
     print("Encrypted Performance")
@@ -122,3 +116,47 @@ if __name__ == '__main__':
     )
 
     enc_train(X, y, weight, lr, epochs, config["crypto_params"]["run_bootstrap"])
+
+
+
+    inverse_scale = 1 / len(y)
+
+    ####################################################################
+    # We need to repeat the weights N-times bc we do the hadamard product then sum
+    #   when we're doing the dot product
+    weights = np.squeeze(weights, axis=1).tolist()
+    repeated_weights = []
+    for i in range(len(X)):
+        repeated_weights.append(weights)
+    weights = EMatrix.fromList(repeated_weights, packing="vertical", repeated=True)
+    weights.encryptSelf()
+
+    ####################################################################
+    # We encrypt all at once. NOTE: this is not a true SGD - we're not shuffling
+    #   between each epoch. Having said that, this is WAY faster
+    e_X = EMatrix.fromList(X.tolist())
+    e_y = EMatrix.fromList(y.tolist())
+    e_X.encryptSelf()
+    e_y.encryptSelf()
+    # errors = []
+    for epoch in range(n_epochs):
+        y_pred, _ = predict("linear", e_X, weights, [])
+        residuals, loss = calculate_loss(y_pred, label=e_y, inverse_num_samples_scale=inverse_scale)
+        weights, grads = apply_gradient(e_X, weights, residuals, inverse_scale, alpha, len(X))
+
+        ################################################
+        # The following isn't realistic - we don't always know the loss. However,
+        #   this is primarily for demo purposes
+        ################################################
+        loss.decryptSelf()
+        print(f"epoch: {epoch} ----> MSE: {loss[0]}")
+
+        # Things accumulate noise as we do computations. These following are options to handle the noise:
+        #   - bootstrapping, which is expensive
+        #   - decrypting and re-encrypting, which comes with its own tradeoffs
+        if run_bootstrap_mode:
+            weights.bootstrap_self()
+        else:
+            weights.recrypt_self()
+    
+
