@@ -1,35 +1,21 @@
-from ematrix import EMatrix
-from typing import Optional, List, Tuple, Union
-import copy
+from pprint import pprint
+
+from typing import Tuple
+import yaml
+from naive_regression.crypto_utils import setup_crypto
+from naive_regression.ematrix import EMatrix
 import numpy as np
 
+from naive_regression.np_reference import train
 
-def predict(regression_type: str,
-            X:EMatrix,
-            weights: EMatrix,
-            nonlinearity_stats: Optional[List] = None) -> Tuple[EMatrix, Union[List, None]]:
-    """
-    nonlinearity_stats are for in case you want to store the data going into the
-        approximations. This is particularly useful if you're finding that the data
-        is blowing up or has stopped making sense. One source of issues is typically
-        that your computations have accumulated too much noise, but it can also be
-        the result of your data exceeding the sigmoid obunds
-    """
+def predict(
+        X:EMatrix,
+        weights: EMatrix,
+) -> EMatrix:
     # compute estimates as dot product between features and weights
 
     dot_prod = X.dot(weights, "vertical")
-    if regression_type == "normal" or regression_type == "linear":
-        return dot_prod, nonlinearity_stats
-    elif regression_type == "logistic" or regression_type == "sigmoid":
-        if nonlinearity_stats is not None:
-            nonlinearity_stats.append(dot_prod)
-        eVv_y_hat = EMatrix.sigmoid(dot_prod)
-    else:
-        print(f"Unsupported regression type {regression_type}")
-        exit(-1)
-
-    return eVv_y_hat, nonlinearity_stats
-
+    return dot_prod
 
 def calculate_loss(prediction: EMatrix, label: EMatrix,
                    inverse_num_samples_scale: float,
@@ -68,26 +54,47 @@ def apply_gradient(
     return weights, grad
 
 
-def recryption(
-        grad: EMatrix,
-        weights: EMatrix,
-) -> Tuple[EMatrix, EMatrix]:
-    """
-    Recrypt to refresh the noise
-    """
-    eVv_old_grad = grad.recrypt()
-    weights.recrypt_self()
-    return weights, eVv_old_grad
+np.random.seed(42)
 
+if __name__ == '__main__':
 
-def train(
-        X: np.ndarray,
-        y: np.ndarray,
-        weights: np.ndarray,
-        alpha: float,
-        n_epochs: int,
-        run_bootstrap_mode = False
-):
+    with open("config.yml", "r") as f:
+        config = yaml.safe_load(f)
+    print("ML Config:")
+    pprint(config["ml_params"])
+    print("Crypto Params:")
+    pprint(config["crypto_params"])
+    if config["crypto_params"]["run_bootstrap"]:
+        print("Running with bootstrap")
+        pprint(config["crypto_bootstrap_params"])
+    ml_conf = config["ml_params"]
+    batch_size = ml_conf["batch_size"]
+    lr = ml_conf["lr"]
+    epochs = ml_conf["epochs"]
+
+    ################################################
+    # Generate data
+    ################################################
+
+    X = np.random.rand(batch_size * 5, 5)
+    y = (np.dot(X, np.random.rand(5, 1))) + np.random.rand(1)
+    noise = np.random.randn(y.shape[0], y.shape[1])
+    y = y + noise
+
+    weights = np.random.rand(5, 1)
+    print("#" * 10)
+    print("Plaintext Performance")
+    m_stat = train(X, y, weights, lr, epochs)
+
+    print("#" * 10)
+    print("Encrypted Performance")
+
+    setup_crypto(
+        num_data_points=-1 if config["crypto_params"]["run_bootstrap"] else len(X),
+        c_params=config["crypto_params"],
+        bootstrap_params=config["crypto_bootstrap_params"]
+    )
+
     inverse_scale = 1 / len(y)
 
     ####################################################################
@@ -107,11 +114,11 @@ def train(
     e_y = EMatrix.fromList(y.tolist())
     e_X.encryptSelf()
     e_y.encryptSelf()
-    # errors = []
-    for epoch in range(n_epochs):
-        y_pred, _ = predict("linear", e_X, weights, [])
+    run_bootstrap_mode = config["crypto_params"]["run_bootstrap"]
+    for epoch in range(epochs):
+        y_pred = predict(e_X, weights)
         residuals, loss = calculate_loss(y_pred, label=e_y, inverse_num_samples_scale=inverse_scale)
-        weights, grads = apply_gradient(e_X, weights, residuals, inverse_scale, alpha, len(X))
+        weights, grads = apply_gradient(e_X, weights, residuals, inverse_scale, lr, len(X))
 
         ################################################
         # The following isn't realistic - we don't always know the loss. However,

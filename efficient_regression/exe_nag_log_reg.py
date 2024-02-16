@@ -95,7 +95,6 @@ if __name__ == '__main__':
     padded_row_size = next_power_of_2(original_num_features)
     padded_col_size = num_slots / padded_row_size
     theta_mask, phi_mask = generate_nag_mask(
-        original_num_features,
         padded_row_size,
         padded_col_size,
         num_slots,
