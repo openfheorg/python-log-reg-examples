@@ -3,8 +3,6 @@ import openfhe
 
 CT = openfhe.Ciphertext
 CC = openfhe.CryptoContext
-
-
 def get_vec_col_cloned(in_vec: List, num_slots: int) -> List:
     n = len(in_vec)
     if num_slots < n:

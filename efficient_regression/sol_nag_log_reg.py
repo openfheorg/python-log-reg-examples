@@ -22,10 +22,11 @@ CT = openfhe.Ciphertext
 import logging
 
 
-def load_data(x_file, y_file, pct_train_on=0.9) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+def load_data(x_file, y_file) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     Xs = pd.read_csv(x_file).to_numpy()
     ys = pd.read_csv(y_file).to_numpy()
     return Xs, ys, Xs, ys
+
 
 def generate_nag_mask(
         padded_row_size,
@@ -58,6 +59,71 @@ def generate_nag_mask(
     return cc.MakeCKKSPackedPlaintext(theta_mask), cc.MakeCKKSPackedPlaintext(phi_mask)
 
 
+def extract_theta_phi(cc, ct_weights, theta_mask, phi_mask,padded_row_size):
+    ################################################
+    # Exe: extract the individual thetas and phis using the mask.
+    #       This involves masking, rotating and adding
+    ################################################
+    _ct_theta = cc.EvalMult(ct_weights, theta_mask)
+    ct_theta = cc.EvalAdd(
+        cc.EvalRotate(_ct_theta, padded_row_size),
+        _ct_theta
+    )
+
+    _ct_phi = cc.EvalMult(ct_weights, phi_mask)
+    ct_phi = cc.EvalAdd(
+        cc.EvalRotate(_ct_phi, -padded_row_size),
+        _ct_phi
+    )
+    return ct_theta, ct_phi
+
+def repack_theta_phi(cc, ct_theta, theta_mask, ct_phi, phi_mask):
+    ################################################
+    # Exe: re-pack the ct_theta and ct_phi back into a single ciphertext
+    #       to reduce the number of bootstraps
+    ################################################
+    ct_theta = cc.EvalMult(ct_theta, theta_mask)
+    ct_phi = cc.EvalMult(ct_phi, phi_mask)
+    return cc.EvalAdd(ct_theta, ct_phi)
+
+
+def reduce_noise(
+        cc,
+        ct_weights,
+        should_run_bootstrap,
+        num_slots_boot,
+        kp
+
+):
+    ################################################
+    # Exe: handle noise refreshing for both the bootstrap and iterative
+    #       mode.
+    #      See what happens if you forget to set the number-of-iterations in EvalBootstrap
+    ################################################
+    # Bootstrapping
+    if should_run_bootstrap:
+        logger.debug(f"Bootstrapping weights for iter: {curr_epoch}")
+        ct_weights.SetSlots(num_slots_boot)
+        if openfhe.get_native_int() == "128":
+            ct_weights = cc.EvalBootstrap(ct_weights)
+        else:
+            ct_weights = cc.EvalBootstrap(ct_weights, 2)
+    else:
+        logger.debug(f"CT Refreshing for iter: {curr_epoch}")
+        _pt_weights = cc.Decrypt(
+            kp.secretKey,
+            ct_weights
+        )
+        _raw_weights = _pt_weights.GetRealPackedValue()
+
+        ct_weights = cc.Encrypt(
+            kp.publicKey,
+            cc.MakeCKKSPackedPlaintext(_raw_weights)
+        )
+    return ct_weights
+
+
+
 if __name__ == '__main__':
 
     with open("config.yml", "r") as f:
@@ -81,7 +147,7 @@ if __name__ == '__main__':
     lr_eta = ml_conf["lr_eta"]
     epochs = ml_conf["epochs"]
 
-    x_train, y_train, x_test, y_test = load_data(ml_conf["x_file"], ml_conf["y_file"], ml_conf["data_pct"])
+    x_train, y_train, x_test, y_test = load_data(ml_conf["x_file"], ml_conf["y_file"])
 
     original_num_samples, original_num_features = x_train.shape
     beta = [[0.0] for _ in range(original_num_features)]
@@ -143,7 +209,7 @@ if __name__ == '__main__':
 
     #   https://github.com/openfheorg/openfhe-logreg-training-examples/blob/main/lr_nag.cpp#L311
     num_features_enc = next_power_of_2(original_num_features)
-    num_slots_boot= num_features_enc * 8
+    num_slots_boot = num_features_enc * 8
     if config["crypto_params"]["run_bootstrap"]:
         logger.info("Enabling FHE features for bootstrap")
         bootstrap_hparams = config["crypto_bootstrap_params"]
@@ -154,47 +220,25 @@ if __name__ == '__main__':
         cc.EvalBootstrapKeyGen(kp.secretKey, num_slots_boot)
         logger.debug("Bootstrap set up")
 
-
     for curr_epoch in range(epochs):
 
         # print(f"************************************************************\nIteration: {curr_epoch}")
 
         if curr_epoch > 0:
-            # Bootstrapping
-            if config["crypto_params"]["run_bootstrap"]:
-                logger.debug(f"Bootstrapping weights for iter: {curr_epoch}")
-                ct_weights.SetSlots(num_slots_boot)
-                if openfhe.get_native_int() == "128":
-                    ct_weights = cc.EvalBootstrap(ct_weights)
-                else:
-                    ct_weights = cc.EvalBootstrap(ct_weights, 2)
-            else:
-                logger.debug(f"CT Refreshing for iter: {curr_epoch}")
-                _pt_weights = cc.Decrypt(
-                    kp.secretKey,
-                    ct_weights
-                )
-                _raw_weights = _pt_weights.GetRealPackedValue()
+            ct_weights = reduce_noise(
+                cc=cc,
+                ct_weights=ct_weights,
+                should_run_bootstrap=config["crypto_params"]["run_bootstrap"],
+                num_slots_boot=num_slots_boot,
+                kp = kp
+            )
 
-                ct_weights = cc.Encrypt(
-                    kp.publicKey,
-                    cc.MakeCKKSPackedPlaintext(_raw_weights)
-                )
+        ct_theta, ct_phi = extract_theta_phi(cc, ct_weights, theta_mask, phi_mask, padded_row_size)
 
         ################################################
         # Extract the weights
         ################################################
-        _ct_theta = cc.EvalMult(ct_weights, theta_mask)
-        ct_theta = cc.EvalAdd(
-            cc.EvalRotate(_ct_theta, padded_row_size),
-            _ct_theta
-        )
 
-        _ct_phi = cc.EvalMult(ct_weights, phi_mask)
-        ct_phi = cc.EvalAdd(
-            cc.EvalRotate(_ct_phi, -padded_row_size),
-            _ct_phi
-        )
 
         ct_gradient = encrypted_log_reg_calculate_gradient(
             cc,
@@ -235,7 +279,6 @@ if __name__ == '__main__':
         ct_phi = ct_phi_prime
 
         if config["RUN_IN_DEBUG"]:
-
             clear_theta = get_raw_value_from_ct(cc, ct_theta, kp, original_num_features)
             loss = compute_loss(beta=clear_theta, X=x_train, y=y_train)
 
@@ -248,6 +291,4 @@ if __name__ == '__main__':
             logger.info(f"Iteration: {curr_epoch} Loss: {loss}")
 
         # Repacking the two ciphertexts back into a single ciphertext
-        ct_theta = cc.EvalMult(ct_theta, theta_mask)
-        ct_phi = cc.EvalMult(ct_phi, phi_mask)
-        ct_weights = cc.EvalAdd(ct_theta, ct_phi)
+        ct_weights = repack_theta_phi(cc, ct_theta, theta_mask, ct_phi, phi_mask)
