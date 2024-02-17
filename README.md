@@ -14,7 +14,7 @@
 There are a total of three exercises:
 
 1) implementing a naive linear regression using the code in the [naive_regression](./naive_regression) folder. Work off of
-`exercise.py` and see `solution.py` for one possible solution.
+`exe_lin_reg.py` and see `sol_lin_reg.py` for one possible solution.
 
 2) Implementing an optimized logistic regression in the [efficient_regression](./efficient_regression) folder. Work off of
 the `exe_log_reg.py` and see `sol_log_reg.py` for a possible implementation.

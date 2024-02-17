@@ -1,7 +1,3 @@
-################################################
-# Here
-################################################
-
 from pprint import pprint
 
 from typing import Tuple
@@ -16,16 +12,17 @@ def predict(
         X:EMatrix,
         weights: EMatrix,
 ) -> EMatrix:
-    # compute estimates as dot product between features and weights
+    ################################################
+    # Exe: implement the prediction via. a dot-product.
+    #       think carefully about what the out-packing might be
+    ################################################
+    pass
 
-    dot_prod = X.dot(weights, "vertical")
-    return dot_prod
 
 def calculate_loss(prediction: EMatrix, label: EMatrix,
                    inverse_num_samples_scale: float,
                    ) -> tuple[EMatrix, EMatrix]:
     residuals = label - prediction
-
     # compute error (difference between estimate y_hat and true value y)
     sq_error = residuals.hprod(residuals)
     enc_SSE = sq_error.sum()
@@ -47,8 +44,7 @@ def apply_gradient(
         this is to allow us to inspect if we need to.
     """
     # Internally, the dot product handles the need for the transpose.
-    # Note: taking the transpose of an encrypted vector, without special tricks,
-    #   is expensive
+
     grad = X.dot(residuals, "vertical")
     grad = grad * -2 * scaling
 
@@ -125,16 +121,13 @@ if __name__ == '__main__':
         weights, grads = apply_gradient(e_X, weights, residuals, inverse_scale, lr, len(X))
 
         ################################################
-        # The following isn't realistic - we don't always know the loss. However,
-        #   this is primarily for demo purposes
+        # Exe: it's not always realistic, but you may wish to displaty the loss
         ################################################
-        loss.decryptSelf()
-        print(f"epoch: {epoch} ----> MSE: {loss[0]}")
 
-        # Things accumulate noise as we do computations. These following are options to handle the noise:
+
+        ################################################
+        # Exe: Our ciphertexts accumulate noise as we do computations. We have two options to handle the noise:
         #   - bootstrapping, which is expensive
         #   - decrypting and re-encrypting, which comes with its own tradeoffs
-        if run_bootstrap_mode:
-            weights.bootstrap_self()
-        else:
-            weights.recrypt_self()
+        #   Benchmark the two to get a feel for the timing difference
+        ################################################
