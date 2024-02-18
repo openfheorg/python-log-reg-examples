@@ -3,7 +3,7 @@ from typing import Dict, Optional, Tuple, List
 
 import openfhe
 
-from efficient_regression.enc_matrix import get_vec_col_cloned, get_vec_row_cloned
+from efficient_regression.clone_vec import get_vec_col_cloned, get_vec_row_cloned
 
 CT = openfhe.Ciphertext
 CC = openfhe.CryptoContext

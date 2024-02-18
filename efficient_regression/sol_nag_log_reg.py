@@ -11,7 +11,7 @@ import yaml
 import numpy as np
 
 from efficient_regression.crypto_utils import create_crypto
-from efficient_regression.lr_train_funcs import encrypted_log_reg_calculate_gradient, compute_loss
+from efficient_regression.lr_train_funcs import sol_logreg_calculate_grad, compute_loss, exe_logreg_calculate_grad
 from efficient_regression.utils import next_power_of_2, collate_one_d_mat_to_ct, mat_to_ct_mat_row_major, \
     one_d_mat_to_vec_col_cloned_ct, get_raw_value_from_ct
 
@@ -121,6 +121,30 @@ def reduce_noise(
             cc.MakeCKKSPackedPlaintext(_raw_weights)
         )
     return ct_weights
+
+
+def update_phi_and_theta(cc, ct_theta, ct_phi, ct_gradient, curr_epoch, lr_eta):
+    ################################################
+    # Exe: update the theta and phi values. If you're not familiat with
+    #       NAG, please reference our nag_logreg_reference.ipynb code
+    ################################################
+    ct_phi_prime = cc.EvalSub(
+        ct_theta,
+        ct_gradient
+    )
+
+    if (curr_epoch == 0):
+        ct_theta = ct_phi_prime
+    else:
+        ct_theta = cc.EvalAdd(
+            ct_phi_prime,
+            cc.EvalMult(
+                lr_eta,
+                cc.EvalSub(ct_phi_prime, ct_phi)
+            )
+        )
+
+    return ct_theta, ct_phi_prime
 
 
 
@@ -240,7 +264,10 @@ if __name__ == '__main__':
         ################################################
 
 
-        ct_gradient = encrypted_log_reg_calculate_gradient(
+        # Exe: Navigate to the exercise function for an extra difficult problem. If for time constraints you want to
+        #       skip this (or come back to this later), comment out the first line and uncomment the second.
+        # ct_gradient = exe_logreg_calculate_grad(
+        ct_gradient = sol_logreg_calculate_grad(
             cc,
             ct_x_train,
             ct_neg_x_train_T,
@@ -260,23 +287,12 @@ if __name__ == '__main__':
         #   https://jlmelville.github.io/mize/nesterov.html
         ################################################
 
-        ct_phi_prime = cc.EvalSub(
-            ct_theta,
-            ct_gradient
-        )
+        if ct_gradient is None:
+            raise Exception("You either "
+                            "\ni) have not implemented exe_logreg_calculate_grad or "
+                            "\nii) forgot to flip the function call to sol_logreg_calculate_grad")
 
-        if (curr_epoch == 0):
-            ct_theta = ct_phi_prime
-        else:
-            ct_theta = cc.EvalAdd(
-                ct_phi_prime,
-                cc.EvalMult(
-                    lr_eta,
-                    cc.EvalSub(ct_phi_prime, ct_phi)
-                )
-            )
-
-        ct_phi = ct_phi_prime
+        ct_theta, ct_phi = update_phi_and_theta(cc, ct_theta, ct_phi, ct_gradient, curr_epoch, lr_eta)
 
         if config["RUN_IN_DEBUG"]:
             clear_theta = get_raw_value_from_ct(cc, ct_theta, kp, original_num_features)
