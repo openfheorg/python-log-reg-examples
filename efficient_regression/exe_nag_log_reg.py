@@ -64,27 +64,15 @@ def extract_theta_phi(cc, ct_weights, theta_mask, phi_mask,padded_row_size):
     # Exe: extract the individual thetas and phis using the mask.
     #       This involves masking, rotating and adding
     ################################################
-    _ct_theta = cc.EvalMult(ct_weights, theta_mask)
-    ct_theta = cc.EvalAdd(
-        cc.EvalRotate(_ct_theta, padded_row_size),
-        _ct_theta
-    )
+    pass
 
-    _ct_phi = cc.EvalMult(ct_weights, phi_mask)
-    ct_phi = cc.EvalAdd(
-        cc.EvalRotate(_ct_phi, -padded_row_size),
-        _ct_phi
-    )
-    return ct_theta, ct_phi
 
 def repack_theta_phi(cc, ct_theta, theta_mask, ct_phi, phi_mask):
     ################################################
     # Exe: re-pack the ct_theta and ct_phi back into a single ciphertext
     #       to reduce the number of bootstraps
     ################################################
-    ct_theta = cc.EvalMult(ct_theta, theta_mask)
-    ct_phi = cc.EvalMult(ct_phi, phi_mask)
-    return cc.EvalAdd(ct_theta, ct_phi)
+    pass
 
 
 def reduce_noise(
@@ -100,27 +88,8 @@ def reduce_noise(
     #       mode.
     #      See what happens if you forget to set the number-of-iterations in EvalBootstrap
     ################################################
-    # Bootstrapping
-    if should_run_bootstrap:
-        logger.debug(f"Bootstrapping weights for iter: {curr_epoch}")
-        ct_weights.SetSlots(num_slots_boot)
-        if openfhe.get_native_int() == "128":
-            ct_weights = cc.EvalBootstrap(ct_weights)
-        else:
-            ct_weights = cc.EvalBootstrap(ct_weights, 2)
-    else:
-        logger.debug(f"CT Refreshing for iter: {curr_epoch}")
-        _pt_weights = cc.Decrypt(
-            kp.secretKey,
-            ct_weights
-        )
-        _raw_weights = _pt_weights.GetRealPackedValue()
+    pass
 
-        ct_weights = cc.Encrypt(
-            kp.publicKey,
-            cc.MakeCKKSPackedPlaintext(_raw_weights)
-        )
-    return ct_weights
 
 
 def update_phi_and_theta(cc, ct_theta, ct_phi, ct_gradient, curr_epoch, lr_eta):
@@ -128,24 +97,7 @@ def update_phi_and_theta(cc, ct_theta, ct_phi, ct_gradient, curr_epoch, lr_eta):
     # Exe: update the theta and phi values. If you're not familiat with
     #       NAG, please reference our nag_logreg_reference.ipynb code
     ################################################
-    ct_phi_prime = cc.EvalSub(
-        ct_theta,
-        ct_gradient
-    )
-
-    if (curr_epoch == 0):
-        ct_theta = ct_phi_prime
-    else:
-        ct_theta = cc.EvalAdd(
-            ct_phi_prime,
-            cc.EvalMult(
-                lr_eta,
-                cc.EvalSub(ct_phi_prime, ct_phi)
-            )
-        )
-
-    return ct_theta, ct_phi_prime
-
+    pass
 
 
 if __name__ == '__main__':
@@ -266,6 +218,7 @@ if __name__ == '__main__':
 
         # Exe: Navigate to the exercise function for an extra difficult problem. If for time constraints you want to
         #       skip this (or come back to this later), comment out the first line and uncomment the second.
+        # ct_gradient = exe_logreg_calculate_grad(
         ct_gradient = sol_logreg_calculate_grad(
             cc,
             ct_x_train,
