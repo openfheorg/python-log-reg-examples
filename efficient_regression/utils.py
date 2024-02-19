@@ -3,7 +3,7 @@ from typing import Dict, Optional, Tuple, List
 
 import openfhe
 
-from efficient_regression.enc_matrix import get_vec_col_cloned, get_vec_row_cloned
+from efficient_regression.clone_vec import get_vec_col_cloned, get_vec_row_cloned
 
 CT = openfhe.Ciphertext
 CC = openfhe.CryptoContext
@@ -70,6 +70,11 @@ def clone_vec_rc(in_mat: List[List], row_size: int, num_slots: int) -> List:
         raise Exception("Input vector is not a power of two")
 
     return get_vec_row_cloned(in_vec, num_slots, 0.0)
+
+def encrypt_weights(cc: CC, kp: openfhe.KeyPair, weights: List[List]):
+    _weights = [v[0] for v in weights]
+    return cc.Encrypt(kp.publicKey, cc.MakeCKKSPackedPlaintext(_weights))
+
 
 def collate_one_d_mat_to_ct(
         cc: CC,

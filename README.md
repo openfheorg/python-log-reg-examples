@@ -5,45 +5,30 @@
 1. Install [OpenFHE-development](https://github.com/openfheorg/openfhe-development)
 2. Install [OpenFHE-python](https://github.com/openfheorg/openfhe-python)
 
-## Running the code
-
-1. Read through `runner.py` and make sure you understand what the code is doing
-2. Run `runner.py`
-
 ## Caveats:
 
 - the code shown below is highly unoptimized and is meant to be used for educational purposes.
 
-## File Structure
+## Exercises
 
-`crypto_utils.py`:
+There are a total of three exercises:
 
-- code to handle under-the-hood calculations for setting up the `CryptoContext`, the `PublicKey`, `PrivateKey`, and `RotationKeys`
-- if you're curious about how it does all of this, the most relevant function would be `setup`
+1) implementing a naive linear regression using the code in the [naive_regression](./naive_regression) folder. Work off of
+`exe_lin_reg.py` and see `sol_lin_reg.py` for one possible solution.
 
-`ematrix.py`:
+2) Implementing an optimized logistic regression in the [efficient_regression](./efficient_regression) folder. Work off of
+the `exe_log_reg.py` and see `sol_log_reg.py` for a possible implementation.
 
-- code providing a matrix interface similar to numpy.
-- Ematrix works on both encrypted and in-the-clear/plaintext data
-- besides providing a familiar interface, it is meant to be hide away many low-level implementation requirements
+3) Implementing an optimized Nesterov-accelerated gradient logistic regression in the [efficient_regression](./efficient_regression) folder. Work off of
+   the `exe_nag_log_reg.py` and see `sol_nag_log_reg.py` for a possible implementation. You may find it useful to reference
+   the plaintext implementation in `nag_logreg_reference.ipynb` which shows how it is implemented in raw numpy.
 
-`ematrix_tests.py`
+## Tips
 
-- tests for the `ematrix.py` class
+Some tips for working with FHE problems:
 
-`reference.py`
-
-- a numpy reference of the code. If everything goes to plan, you will see the exact same results
-
-`regression_code.py`
-
-- code providing a higher-level interface for regression
-- the function signatures mimic those in `reference.py`
-
-`runner.py`
-
-- the top-level code for this library
-
-`utils.py`
-
-- misc. utils
+1) start with a small-ish ring dimension
+2) turn off the security setting (via `HEStd_NotSet`)
+3) create a reference numpy implementation
+4) Try to do as much as possible in plaintext-space before finally encrypting things
+5) ciphertext refreshing speeds up iteration, so start with that for prototyping

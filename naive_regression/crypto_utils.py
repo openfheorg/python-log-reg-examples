@@ -1,6 +1,9 @@
 from typing import Dict, Tuple, Optional, List
 
 import openfhe
+from openfhe import PKESchemeFeature
+
+from naive_regression.ematrix import EMatrix
 
 
 def next_pow_of_2(x):
@@ -36,60 +39,60 @@ def generate_rotation_keys(
 
 
 def setup_crypto(
-        mult_depth,
-        scale_mod_size,
-        ring_dimensionality,
-        crypto_batch_size,
-        num_entries,  # Determines the ring dimensionality
-        level_budget: Optional[List[int]] = None,
-        levels_after_bootstrap: Optional[int] = None
-) -> Tuple[openfhe.CryptoContext, openfhe.PublicKey, openfhe.PrivateKey, int, bool]:
-    ################################################
-    # Checking that the batch size isn't larger than what we support
-    # if next_pow_of_2(num_entries) > crypto_batch_size:
-    #     err_str = f"User-specified crypto batch ({crypto_batch_size}) size must be greater than the next-power-of-two of the number of entries({next_pow_of_2(num_entries)})"
-    #     raise RuntimeError(err_str)
-    if crypto_batch_size > ring_dimensionality / 2:
-        err_str = "max batch size must be at most half of ring-dimensionality"
-        raise RuntimeError(err_str)
+        num_data_points: int,
+        c_params: Dict,
+        bootstrap_params: Optional[Dict] = None
+):
+    # CKKS cryptographic parameters
+    if openfhe.get_native_int() == 128:
+        print("Running in 128-bit mode")
+        rescale_tech = openfhe.ScalingTechnique.FIXEDAUTO
+        scaling_mod_size = c_params["128_scaling_mod_size"]
+        first_mod = c_params["128_first_mod"]
+    else:
+        print("Running in 64-bit mode")
+        rescale_tech = openfhe.ScalingTechnique.FLEXIBLEAUTO
+        scaling_mod_size = c_params["64_scaling_mod_size"]
+        first_mod = c_params["64_first_mod"]
 
+    if c_params["run_bootstrap"]:
+        level_budget = bootstrap_params["level_budget"]
+        levels_after_bootstrap = bootstrap_params["levels_after_bootstrap"]
+        secret_key_dist = openfhe.SecretKeyDist.UNIFORM_TERNARY
+        mult_depth = levels_after_bootstrap + openfhe.FHECKKSRNS.GetBootstrapDepth(level_budget, secret_key_dist)
+    else:
+        mult_depth = c_params["mult_depth"]
+
+    ################################################
+    # Setting the parameters
     ################################################
     parameters = openfhe.CCParamsCKKSRNS()
-
-    is_running_bootstrap =level_budget is not None and levels_after_bootstrap is not None
-    if is_running_bootstrap:
-
-        if len(level_budget) != 2:
-            err_str = "level budget is specified by a tuple of two elements"
-            raise RuntimeError(err_str)
-        print("Running in bootstrap mode")
-        secret_key_dist = openfhe.SecretKeyDist.UNIFORM_TERNARY
-        parameters.SetSecretKeyDist(secret_key_dist)
-        mult_depth = levels_after_bootstrap + openfhe.FHECKKSRNS.GetBootstrapDepth(
-            level_budget, secret_key_dist)
+    parameters.SetScalingModSize(scaling_mod_size)
+    parameters.SetScalingTechnique(rescale_tech)
+    parameters.SetFirstModSize(first_mod)
 
     parameters.SetMultiplicativeDepth(mult_depth)
-    parameters.SetScalingModSize(scale_mod_size)
-    # parameters.SetBatchSize(crypto_batch_size)
-    parameters.SetBatchSize(ring_dimensionality)
-    # parameters.SetRingDim(ring_dimensionality)
 
-    cc: openfhe.CryptoContext = openfhe.GenCryptoContext(parameters)
-    cc.Enable(openfhe.PKESchemeFeature.PKE)
-    cc.Enable(openfhe.PKESchemeFeature.ADVANCEDSHE)
-    cc.Enable(openfhe.PKESchemeFeature.KEYSWITCH)
-    cc.Enable(openfhe.PKESchemeFeature.LEVELEDSHE)
+    cc = openfhe.GenCryptoContext(parameters)
+    cc.Enable(PKESchemeFeature.PKE)
+    cc.Enable(PKESchemeFeature.KEYSWITCH)
+    cc.Enable(PKESchemeFeature.LEVELEDSHE)
+    cc.Enable(PKESchemeFeature.ADVANCEDSHE)
+    cc.Enable(PKESchemeFeature.FHE)
 
-    if is_running_bootstrap:
-        cc.Enable(openfhe.PKESchemeFeature.FHE)
+    if c_params["num_slots"]:
+        num_slots = c_params["num_slots"]
+    else:
+        num_slots = int(cc.GetRingDimension() / 2)
 
+    if c_params["run_bootstrap"]:
+        cc.EvalBootstrapSetup(level_budget)
     keypair: openfhe.KeyPair = cc.KeyGen()
-
-    rot_k = generate_rotation_keys(cc, keypair.secretKey, num_entries)
+    rot_k = generate_rotation_keys(cc, keypair.secretKey, num_data_points)
     cc.EvalMultKeyGen(keypair.secretKey)
     cc.EvalSumKeyGen(keypair.secretKey)
-    if is_running_bootstrap:
-        cc.EvalBootstrapSetup(level_budget)
-        cc.EvalBootstrapKeyGen(keypair.secretKey, crypto_batch_size)
+    if c_params["run_bootstrap"]:
+        cc.EvalBootstrapKeyGen(keypair.secretKey, num_slots)
 
-    return cc, keypair.publicKey, keypair.secretKey, rot_k, is_running_bootstrap
+    eMatrix = EMatrix(-1, -1, init=False)
+    eMatrix.set_crypto(cc, rot_k, keypair.publicKey, keypair.secretKey)

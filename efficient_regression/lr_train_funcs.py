@@ -1,7 +1,6 @@
 from typing import Dict, List, Optional
 
 import numpy as np
-from efficient_regression.enc_matrix import matrix_vector_product_col, matrix_vector_product_row
 import openfhe
 
 from efficient_regression.utils import get_raw_value_from_ct
@@ -20,7 +19,7 @@ def optimize_x(X: np.ndarray, scaling_factor) -> np.ndarray:
     return X.T * (-1 / scaling_factor)
 
 
-def encrypted_log_reg_calculate_gradient(
+def sol_logreg_calculate_grad(
         cc: CC,
         ct_X: CT,
         ct_neg_Xt: CT,
@@ -41,7 +40,6 @@ def encrypted_log_reg_calculate_gradient(
     # Line 4. Generate the logits
     logits = matrix_vector_product_row(cc, col_sum_keymap, ct_X, ctThetas, row_size)
    
-    _logits = get_raw_value_from_ct(cc, logits, kp, 10)
     # Line 5/6
     preds = cc.EvalLogistic(logits, cheb_range_start, cheb_range_end, cheb_poly_degree)
     
@@ -51,6 +49,34 @@ def encrypted_log_reg_calculate_gradient(
     gradients = matrix_vector_product_col(cc, row_sum_keymap, ct_neg_Xt,
                                           residual, row_size)
     return gradients
+
+
+def exe_logreg_calculate_grad(
+        cc: CC,
+        ct_X: CT,
+        ct_neg_Xt: CT,
+        ct_y: CT,
+        ctThetas,
+        row_size: int,
+        row_sum_keymap: Dict,
+        col_sum_keymap: Dict,
+        cheb_range_start: float,
+        cheb_range_end: float,
+        cheb_poly_degree: int,
+        kp: Optional[openfhe.KeyPair] = None
+) -> List:
+    ################################################
+    # Exe: extra hard!! Feel free to reference the sol_logreg_calculate_grad function above
+    #      In this we will implement the following steps:
+    #      1) logit calculation using dot-product
+    #      2) applying the logistic function
+    #      3) residual calculation
+    #      4) gradient calculation (without using the X.T) via a dot-product
+    # Two functions that will be useful for the dot-product are matrix_vector_product_row and matrix_vector_product_col
+    # That you might want to look at
+    ################################################
+    pass
+
 
 
 def re_encrypt(cc: CC, ct: CT, kp: openfhe.KeyPair):
@@ -70,7 +96,6 @@ def return_depth(ct: CT):
 def logistic_function(x):    
     return 1/ (1 + np.exp(-x))
 
-# TODO: convert compute_loss https://github.com/openfheorg/openfhe-logreg-training-examples/blob/main/lr_train_funcs.cpp#L194
 def compute_loss(
         beta: List,
         X: np.ndarray,
@@ -84,3 +109,13 @@ def compute_loss(
     error = (_y * np.log(y_pred)) + ((1 - _y) * np.log(1 - y_pred))
     cost = -1 / num_samples * sum(error)
     return cost
+
+
+def matrix_vector_product_row(cc: CC, eval_sum_col_map, c_mat, c_vec_row_cloned, row_size):
+    c_mult = cc.EvalMult(c_mat, c_vec_row_cloned)
+    return cc.EvalSumCols(c_mult, row_size, eval_sum_col_map)
+
+
+def matrix_vector_product_col(cc: CC, eval_sum_row_map, c_mat, c_vec_col_cloned, row_size):
+    c_mult = cc.EvalMult(c_mat, c_vec_col_cloned)
+    return cc.EvalSumRows(c_mult, row_size, eval_sum_row_map)

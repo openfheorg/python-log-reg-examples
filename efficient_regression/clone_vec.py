@@ -1,9 +1,4 @@
 from typing import List
-import openfhe
-
-CT = openfhe.Ciphertext
-CC = openfhe.CryptoContext
-
 
 def get_vec_col_cloned(in_vec: List, num_slots: int) -> List:
     n = len(in_vec)
@@ -17,6 +12,7 @@ def get_vec_col_cloned(in_vec: List, num_slots: int) -> List:
         for j in range(num_clones):
             container.append(in_vec[i])
     return container
+
 
 
 def get_vec_row_cloned(in_vec: List, num_slots, padding_val) -> List:
@@ -37,11 +33,3 @@ def get_vec_row_cloned(in_vec: List, num_slots, padding_val) -> List:
     return container
 
 
-def matrix_vector_product_row(cc: CC, eval_sum_col_map, c_mat, c_vec_row_cloned, row_size):
-    c_mult = cc.EvalMult(c_mat, c_vec_row_cloned)
-    return cc.EvalSumCols(c_mult, row_size, eval_sum_col_map)
-
-
-def matrix_vector_product_col(cc: CC, eval_sum_row_map, c_mat, c_vec_col_cloned, row_size):
-    c_mult = cc.EvalMult(c_mat, c_vec_col_cloned)
-    return cc.EvalSumRows(c_mult, row_size, eval_sum_row_map)
