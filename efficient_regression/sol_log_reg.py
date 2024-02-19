@@ -109,7 +109,7 @@ if __name__ == '__main__':
     # Optimization: reduces the mult depth by 1
     # NOTE: we don't actually do the transpose. This is because when we use it later on
     #   we treat it as a col matrix, as opposed to a row matrix.
-    neg_x_train_T = -1 * x_train * (lr_gamma / len(x_train))
+    neg_x_train_T = -1 * x_train * (1 / len(x_train))
 
     logger.debug("Generating the Sum keys")
     eval_sum_row_keys = cc.EvalSumRowsKeyGen(kp.secretKey, rowSize=padded_row_size)
