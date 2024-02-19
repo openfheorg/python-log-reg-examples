@@ -71,6 +71,11 @@ def clone_vec_rc(in_mat: List[List], row_size: int, num_slots: int) -> List:
 
     return get_vec_row_cloned(in_vec, num_slots, 0.0)
 
+def encrypt_weights(cc: CC, kp: openfhe.KeyPair, weights: List[List]):
+    _weights = [v[0] for v in weights]
+    return cc.Encrypt(kp.publicKey, cc.MakeCKKSPackedPlaintext(_weights))
+
+
 def collate_one_d_mat_to_ct(
         cc: CC,
         m1: List[List],

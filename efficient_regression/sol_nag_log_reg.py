@@ -126,7 +126,7 @@ def reduce_noise(
 def update_phi_and_theta(cc, ct_theta, ct_phi, ct_gradient, curr_epoch, lr_eta):
     ################################################
     # Exe: update the theta and phi values. If you're not familiat with
-    #       NAG, please reference our nag_logreg_reference.ipynb code
+    #       NAG, please reference our logreg_reference.ipynb code
     ################################################
     ct_phi_prime = cc.EvalSub(
         ct_theta,
@@ -134,9 +134,9 @@ def update_phi_and_theta(cc, ct_theta, ct_phi, ct_gradient, curr_epoch, lr_eta):
     )
 
     if (curr_epoch == 0):
-        ct_theta = ct_phi_prime
+        new_ct_theta = ct_phi_prime
     else:
-        ct_theta = cc.EvalAdd(
+        new_ct_theta = cc.EvalAdd(
             ct_phi_prime,
             cc.EvalMult(
                 lr_eta,
@@ -144,7 +144,7 @@ def update_phi_and_theta(cc, ct_theta, ct_phi, ct_gradient, curr_epoch, lr_eta):
             )
         )
 
-    return ct_theta, ct_phi_prime
+    return new_ct_theta, ct_phi_prime
 
 
 
