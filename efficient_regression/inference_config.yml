@@ -1,0 +1,51 @@
+crypto_params:
+  # Note: the crypro params here are the same as in the naive implementation. The main differences
+  # are that we run this on a real world dataset and with more efficient code
+  128_scaling_mod_size: 78
+  128_first_mod: 89
+  rescale_method: "FIXEDAUTO"
+  keyswitch_method: "HYBRID"
+  64_scaling_mod_size: 59
+  64_first_mod: 60
+  run_bootstrap: false
+  mult_depth: 9  # Overwritten if we run_bootstrap
+  num_slots: false
+  num_large_digits: 0
+  max_relin_sk_deg: 1
+
+  # TODO: swap out the values below
+  ring_dimensionality: 32768 #131072  # 1 << 15
+  batch_size: 16384  # ring_dimensionality / 2
+  security_level: HEStd_NotSet #HEStd_128_classic
+
+# If run_bootstrap above is false, we do not use the following block
+crypto_bootstrap_params:
+  level_budget: [ 2, 2 ]
+  levels_before_bootstrap_128bit: 15
+  levels_before_bootstrap_64bit: 16
+  approx_bootstrap_depth: 8
+  secret_key_dist: "UNIFORM_TERNARY"
+  bsgs_dim: [0, 0]
+  64_bit_precision: 2
+  128_bit_precision: 0
+
+chebyshev_params:
+  lower_bound: -16
+  upper_bound: 16
+  polynomial_degree: 59
+
+ml_params:
+  batch_size: 256
+  lr_gamma: 0.1
+  lr_eta: 0.1
+  epochs: 100
+
+  # Note: this trains on the reduced dataset of 1024 for the purposes of this demo.
+  #   To get the full training dataset you should use "train_data/X_norm_37264.csv"
+  #   and the corresponding "train_data/y_37264.csv"
+  x_file: "./data/X_norm_1024.csv"
+  y_file: "./data/y_1024.csv"
+  data_pct: 0.8  # Train on 80pct of the data and test on remaining 20%
+
+logging_level: INFO
+RUN_IN_DEBUG: true

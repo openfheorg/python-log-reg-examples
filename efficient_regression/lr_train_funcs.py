@@ -9,16 +9,6 @@ CT = openfhe.Ciphertext
 CC = openfhe.CryptoContext
 
 
-def optimize_x(X: np.ndarray, scaling_factor) -> np.ndarray:
-    """
-    Take the transpose, multiply by -1 / scaling factor. This optimizes the crypto-side
-        of things in terms of run-time and mult depth. This also gets around the issue
-        of needing to take an inverse
-    """
-
-    return X.T * (-1 / scaling_factor)
-
-
 def sol_logreg_calculate_grad(
         cc: CC,
         ct_X: CT,

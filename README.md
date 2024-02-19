@@ -11,17 +11,18 @@
 
 ## Exercises
 
-There are a total of three exercises:
+There are a total of four exercises:
 
-1) implementing a naive linear regression using the code in the [naive_regression](./naive_regression) folder. Work off of
-`exe_lin_reg.py` and see `sol_lin_reg.py` for one possible solution.
+1) implementing a naive linear regression using the starter code in the [naive_regression](./naive_regression) folder. Work off of
+`exe_lin_reg.py` in this top-level folder and see `sol_lin_reg.py` for one possible solution.
 
-2) Implementing an optimized logistic regression in the [efficient_regression](./efficient_regression) folder. Work off of
-the `exe_log_reg.py` and see `sol_log_reg.py` for a possible implementation.
+2) Implementing an optimized logistic regression using the starter code in the [efficient_regression](./efficient_regression) folder. Work off of
+the `exe_log_reg.py` in this top-level folder and see `sol_log_reg.py` for a possible implementation.  You may find it useful to reference
+   the plaintext implementation in `logreg_reference.ipynb` which shows how it is implemented in raw numpy.
 
 3) Implementing an optimized Nesterov-accelerated gradient logistic regression in the [efficient_regression](./efficient_regression) folder. Work off of
    the `exe_nag_log_reg.py` and see `sol_nag_log_reg.py` for a possible implementation. You may find it useful to reference
-   the plaintext implementation in `nag_logreg_reference.ipynb` which shows how it is implemented in raw numpy.
+   the plaintext implementation in `logreg_reference.ipynb` which shows how it is implemented in raw numpy.
 
 ## Tips
 
