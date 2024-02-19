@@ -30,7 +30,13 @@ def load_data(x_file, y_file) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.nd
 
 
 def update_weights(cc: CC, ct_weights: CT, grads: CT, lr: float):
-    return cc.EvalSub(ct_weights, cc.EvalMult(lr, grads))
+    ################################################
+    # Implement a gradient step.
+    # Functions you may find useful:
+    #   - cc.EvalSub
+    #   - cc.EvalMult
+    ################################################
+    pass
 
 
 def reduce_noise(
@@ -45,27 +51,8 @@ def reduce_noise(
     #       mode.
     #      See what happens if you forget to set the number-of-iterations in EvalBootstrap
     ################################################
-    # Bootstrapping
-    if should_run_bootstrap:
-        logger.debug(f"Bootstrapping weights for iter: {curr_epoch}")
-        ct_weights.SetSlots(num_slots_boot)
-        if openfhe.get_native_int() == "128":
-            ct_weights = cc.EvalBootstrap(ct_weights)
-        else:
-            ct_weights = cc.EvalBootstrap(ct_weights, 2)
-    else:
-        logger.debug(f"CT Refreshing for iter: {curr_epoch}")
-        _pt_weights = cc.Decrypt(
-            kp.secretKey,
-            ct_weights
-        )
-        _raw_weights = _pt_weights.GetRealPackedValue()
+    pass
 
-        ct_weights = cc.Encrypt(
-            kp.publicKey,
-            cc.MakeCKKSPackedPlaintext(_raw_weights)
-        )
-    return ct_weights
 
 
 
@@ -106,7 +93,7 @@ if __name__ == '__main__':
     padded_row_size = next_power_of_2(original_num_features)
     padded_col_size = num_slots / padded_row_size
 
-    # Optimization: reduces the mult depth by 1
+    # Exe: reduces the mult depth by 1
     # NOTE: we don't actually do the transpose. This is because when we use it later on
     #   we treat it as a col matrix, as opposed to a row matrix.
     neg_x_train_T = -1 * x_train * (1 / len(x_train))
@@ -175,7 +162,11 @@ if __name__ == '__main__':
 
         # Exe: Navigate to the exercise function for an extra difficult problem. If for time constraints you want to
         #       skip this (or come back to this later), comment out the first line and uncomment the second.
-        ct_gradient = sol_logreg_calculate_grad(
+
+        # Exe: Navigate to the exercise function for an extra difficult problem. If for time constraints you want to
+        #       skip this (or come back to this later), comment out the first line and uncomment the second.
+        ct_gradient = exe_logreg_calculate_grad(
+        # ct_gradient = sol_logreg_calculate_grad(
             cc,
             ct_x_train,
             ct_neg_x_train_T,
