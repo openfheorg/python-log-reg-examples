@@ -16,7 +16,7 @@ def predict(
     # Exe: implement the prediction via. a dot-product.
     #       think carefully about what the out-packing might be
     ################################################
-    pass
+    return X.dot(weights, "vertical")
 
 
 def calculate_loss(prediction: EMatrix, label: EMatrix,
@@ -58,7 +58,7 @@ np.random.seed(42)
 
 if __name__ == '__main__':
 
-    with open("config.yml", "r") as f:
+    with open("naive_regression/config.yml", "r") as f:
         config = yaml.safe_load(f)
     print("ML Config:")
     pprint(config["ml_params"])
@@ -124,6 +124,7 @@ if __name__ == '__main__':
         # Exe: it's not always realistic, but you may wish to displaty the loss
         ################################################
 
+        print(f"epoch: {epoch} ----> MSE: {loss.decryptSelf()[0]}")
 
         ################################################
         # Exe: Our ciphertexts accumulate noise as we do computations. We have two options to handle the noise:
@@ -131,3 +132,9 @@ if __name__ == '__main__':
         #   - decrypting and re-encrypting, which comes with its own tradeoffs
         #   Benchmark the two to get a feel for the timing difference
         ################################################
+
+
+        if run_bootstrap_mode:
+            weights.bootstrap_self()
+        else:
+            weights.recrypt_self()

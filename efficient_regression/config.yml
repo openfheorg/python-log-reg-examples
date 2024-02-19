@@ -43,8 +43,8 @@ ml_params:
   # Note: this trains on the reduced dataset of 1024 for the purposes of this demo.
   #   To get the full training dataset you should use "train_data/X_norm_37264.csv"
   #   and the corresponding "train_data/y_37264.csv"
-  x_file: "../data/X_norm_1024.csv"
-  y_file: "../data/y_1024.csv"
+  x_file: "./data/X_norm_1024.csv"
+  y_file: "./data/y_1024.csv"
   data_pct: 0.8  # Train on 80pct of the data and test on remaining 20%
 
 logging_level: INFO
