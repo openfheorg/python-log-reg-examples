@@ -21,7 +21,7 @@ def predict(
 
 def calculate_loss(prediction: EMatrix, label: EMatrix,
                    inverse_num_samples_scale: float,
-                   ) -> tuple[EMatrix, EMatrix]:
+                   ) -> Tuple[EMatrix, EMatrix]:
     residuals = label - prediction
     # compute error (difference between estimate y_hat and true value y)
     sq_error = residuals.hprod(residuals)

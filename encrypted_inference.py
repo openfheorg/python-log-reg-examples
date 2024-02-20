@@ -32,18 +32,36 @@ def predict(
 
     return preds
 
+def repeat_and_encrypt_weights(
+        cc: CC,
+        trained_weights: List[float],
+        padded_row_size: int,
+        num_slots: int,
+        kp: openfhe.KeyPair
+):
+    padded_weights = trained_weights + [0] * (padded_row_size - len(trained_weights))
+    repeated_weights_vec = padded_weights * (num_slots // padded_row_size)
+    return cc.Encrypt(
+        kp.publicKey,
+        cc.MakeCKKSPackedPlaintext(repeated_weights_vec)
+    )
+
+
 
 def load_data(x_file, y_file) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     Xs = pd.read_csv(x_file).to_numpy()
     ys = pd.read_csv(y_file).to_numpy()
     return Xs, ys, Xs, ys
 
+def decrypt_predictions(cc, ct, kp):
+    return
+
 
 if __name__ == '__main__':
     # Trained in-the-clear using the `logreg_reference.ipynb`
 
-    trained_weights = [[-0.83946494], [0.1006747], [-0.86173275], [0.41098421], [-0.55124025], [-0.09287871], [-0.03976215],
-     [-0.20657445], [0.06133055], [0.24880721]]
+    trained_weights = [-0.83946494,  0.1006747 , -0.86173275,  0.41098421, -0.55124025,
+       -0.09287871, -0.03976215, -0.20657445,  0.06133055,  0.24880721]
 
 
 
@@ -97,7 +115,7 @@ if __name__ == '__main__':
 
     # TODO: the issue is here with the repeated weights. I think I'm not
     #       copying it across the batch
-    ct_weights = one_d_mat_to_vec_col_cloned_ct(
+    ct_weights = repeat_and_encrypt_weights(
         cc,
         trained_weights,
         padded_row_size,
@@ -113,7 +131,11 @@ if __name__ == '__main__':
                           cheb_poly_degree=config["chebyshev_params"]["polynomial_degree"],
                           )
 
-    clear_predictions = get_raw_value_from_ct(cc, predictions, kp, original_num_features)
+    packed_preds: openfhe.Plaintext = cc.Decrypt(predictions, kp.secretKey)
+    clear_preds = []
+    packed_predictions = packed_preds.GetRealPackedValue()
+    for idx in range(0, len(packed_predictions), padded_row_size):
+        clear_preds.append(packed_predictions[idx])
 
-    for i, (y_hat, y) in enumerate(zip(clear_predictions, y_train)):
+    for i, (y_hat, y) in enumerate(zip(clear_preds, y_train)):
         print(y_hat, y)
