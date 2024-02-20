@@ -194,6 +194,6 @@ if __name__ == '__main__':
             loss = compute_loss(beta=clear_theta, X=x_train, y=y_train)
 
             clear_grads = get_raw_value_from_ct(cc, ct_gradient, kp, original_num_features)
-            logger.info(f"Grad: {clear_grads}")
-            logger.info(f"Theta: {clear_theta}")
+            logger.debug(f"Grad: {clear_grads}")
+            logger.debug(f"Theta: {clear_theta}")
             logger.info(f"Iteration: {curr_epoch} Loss: {loss}")
