@@ -7,8 +7,8 @@ crypto_params:
   keyswitch_method: "HYBRID"
   64_scaling_mod_size: 59
   64_first_mod: 60
-  run_bootstrap: true
-  mult_depth: 13  # Overwritten if we run_bootstrap
+  run_bootstrap: false
+  mult_depth: 9  # Overwritten if we run_bootstrap
   num_slots: false
   num_large_digits: 0
   max_relin_sk_deg: 1

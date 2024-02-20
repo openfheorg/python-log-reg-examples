@@ -21,7 +21,7 @@ def predict(
 
 def calculate_loss(prediction: EMatrix, label: EMatrix,
                    inverse_num_samples_scale: float,
-                   ) -> tuple[EMatrix, EMatrix]:
+                   ) -> Tuple[EMatrix, EMatrix]:
     residuals = label - prediction
     # compute error (difference between estimate y_hat and true value y)
     sq_error = residuals.hprod(residuals)
@@ -58,7 +58,7 @@ np.random.seed(42)
 
 if __name__ == '__main__':
 
-    with open("config.yml", "r") as f:
+    with open("naive_regression/config.yml", "r") as f:
         config = yaml.safe_load(f)
     print("ML Config:")
     pprint(config["ml_params"])
