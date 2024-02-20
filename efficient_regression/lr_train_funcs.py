@@ -65,7 +65,7 @@ def exe_logreg_calculate_grad(
     # Two functions that will be useful for the dot-product are matrix_vector_product_row and matrix_vector_product_col
     # That you might want to look at
     ################################################
-    pass
+    raise NotImplementedError("You'll want to implement exe_logreg_calculate_grad. Alternatively, just use the ")
 
 
 
@@ -75,15 +75,7 @@ def re_encrypt(cc: CC, ct: CT, kp: openfhe.KeyPair):
         kp.publicKey,
         cc.MakeCKKSPackedPlaintext(decrypted_res)
     )
-
-
-def return_depth(ct: CT):
-    # Ciphertext refreshing, the alternative to ciphertext-bootstrapping
-    # TODO: implement if needed
-    # https://github.com/openfheorg/openfhe-logreg-training-examples/blob/main/lr_train_funcs.cpp#L187
-    mult_depth = ct.GetLevel()
-
-def logistic_function(x):    
+def logistic_function(x):
     return 1/ (1 + np.exp(-x))
 
 def compute_loss(

@@ -33,7 +33,7 @@ def predict(
     #     - EvalSumCols
     #     cc.EvalLogistic() to generate the prediction
     ################################################
-    pass
+    raise NotImplementedError("Implement the prediction")
 
 
 def repeat_and_encrypt_weights(
@@ -50,7 +50,7 @@ def repeat_and_encrypt_weights(
     #      3) pack the plaintext
     #      4) encrypt
     ################################################
-    pass
+    raise NotImplementedError("Implement the repeat_and_encrypt_weights")
 
 
 def load_data(x_file, y_file) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
@@ -126,9 +126,6 @@ if __name__ == '__main__':
                           cheb_range_end=config["chebyshev_params"]["upper_bound"],
                           cheb_poly_degree=config["chebyshev_params"]["polynomial_degree"],
                           )
-
-    if predictions is None:
-        raise Exception("You have not implemented the predict function yet")
 
     packed_preds: openfhe.Plaintext = cc.Decrypt(predictions, kp.secretKey)
     clear_preds = []

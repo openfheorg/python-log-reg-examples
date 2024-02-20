@@ -64,7 +64,8 @@ def extract_theta_phi(cc, ct_weights, theta_mask, phi_mask,padded_row_size):
     # Exe: extract the individual thetas and phis using the mask.
     #       This involves masking, rotating and adding
     ################################################
-    pass
+
+    raise NotImplementedError("Implement the masking and extraction of theta and phi from the single ciphertext in extract_theta_phi")
 
 
 def repack_theta_phi(cc, ct_theta, theta_mask, ct_phi, phi_mask):
@@ -72,7 +73,7 @@ def repack_theta_phi(cc, ct_theta, theta_mask, ct_phi, phi_mask):
     # Exe: re-pack the ct_theta and ct_phi back into a single ciphertext
     #       to reduce the number of bootstraps
     ################################################
-    pass
+    raise NotImplementedError("Implement the re-packing of theta and phi into a single ciphertext in repack_theta_phi")
 
 
 def reduce_noise(
@@ -88,7 +89,7 @@ def reduce_noise(
     #       mode.
     #      See what happens if you forget to set the number-of-iterations in EvalBootstrap
     ################################################
-    pass
+    raise NotImplementedError("implement noise-reduction for the ct_weights in reduce_noise")
 
 
 
@@ -97,7 +98,7 @@ def update_phi_and_theta(cc, ct_theta, ct_phi, ct_gradient, curr_epoch, lr_eta):
     # Exe: update the theta and phi values. If you're not familiat with
     #       NAG, please reference our logreg_reference.ipynb code
     ################################################
-    pass
+    raise NotImplementedError("implement the phi and theta update in update_phi_and_theta")
 
 
 if __name__ == '__main__':

@@ -117,6 +117,7 @@ if __name__ == '__main__':
     run_bootstrap_mode = config["crypto_params"]["run_bootstrap"]
     for epoch in range(epochs):
         y_pred = predict(e_X, weights)
+
         residuals, loss = calculate_loss(y_pred, label=e_y, inverse_num_samples_scale=inverse_scale)
         weights, grads = apply_gradient(e_X, weights, residuals, inverse_scale, lr, len(X))
 

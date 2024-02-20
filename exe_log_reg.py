@@ -31,12 +31,12 @@ def load_data(x_file, y_file) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.nd
 
 def update_weights(cc: CC, ct_weights: CT, grads: CT, lr: float):
     ################################################
-    # Implement a gradient step.
+    # Exe: Implement a gradient step.
     # Functions you may find useful:
     #   - cc.EvalSub
     #   - cc.EvalMult
     ################################################
-    pass
+    raise NotImplementedError("You'll want to implement the weight update in the update_weights")
 
 
 def reduce_noise(
@@ -51,7 +51,8 @@ def reduce_noise(
     #       mode.
     #      See what happens if you forget to set the number-of-iterations in EvalBootstrap
     ################################################
-    pass
+
+    raise NotImplementedError("You'll want to implement the ciphertext noise reduction in reduce_noise")
 
 
 

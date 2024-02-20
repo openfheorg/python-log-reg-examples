@@ -16,7 +16,7 @@ def predict(
     # Exe: implement the prediction via. a dot-product.
     #       think carefully about what the out-packing might be
     ################################################
-    pass
+    raise NotImplementedError()
 
 
 def calculate_loss(prediction: EMatrix, label: EMatrix,
@@ -117,6 +117,9 @@ if __name__ == '__main__':
     run_bootstrap_mode = config["crypto_params"]["run_bootstrap"]
     for epoch in range(epochs):
         y_pred = predict(e_X, weights)
+        if y_pred is None:
+            raise Exception("You have not implemented the predict function yet")
+
         residuals, loss = calculate_loss(y_pred, label=e_y, inverse_num_samples_scale=inverse_scale)
         weights, grads = apply_gradient(e_X, weights, residuals, inverse_scale, lr, len(X))
 
@@ -131,3 +134,4 @@ if __name__ == '__main__':
         #   - decrypting and re-encrypting, which comes with its own tradeoffs
         #   Benchmark the two to get a feel for the timing difference
         ################################################
+        raise NotImplementedError("You'll want to implement the ciphertext noise reduction")
