@@ -24,6 +24,12 @@ def sol_logreg_calculate_grad(
         kp: Optional[openfhe.KeyPair] = None
 ) -> List:
     """
+    Note:
+        From https://github.com/openfheorg/openfhe-logreg-training-examples/blob/0e5f612af019f5d0504b259c881b9ad5c2ea5481/utils.cpp#L403C1-L406C32
+        X will be used in a MatrixVectorProductRow so needs to be encrypted as MAT_ROW_MAJOR rowSize x colSize
+        negXt will be used in MatrixVectorPRoductCol, but since it is transpose of X we can use
+            negX in MAT_ROW_MAJOR because that is the same as negX' in MAT_COL_MAJOR
+
     We use the same notation and setup as in https://eprint.iacr.org/2018/662.pdf
     """
 
@@ -55,6 +61,16 @@ def exe_logreg_calculate_grad(
         cheb_poly_degree: int,
         kp: Optional[openfhe.KeyPair] = None
 ) -> List:
+    """
+    Note:
+    From https://github.com/openfheorg/openfhe-logreg-training-examples/blob/0e5f612af019f5d0504b259c881b9ad5c2ea5481/utils.cpp#L403C1-L406C32
+    X will be used in a MatrixVectorProductRow so needs to be encrypted as MAT_ROW_MAJOR rowSize x colSize
+    negXt will be used in MatrixVectorPRoductCol, but since it is transpose of X we can use
+        negX in MAT_ROW_MAJOR because that is the same as negX' in MAT_COL_MAJOR
+
+
+    """
+
     ################################################
     # Exe: extra hard!! Feel free to reference the sol_logreg_calculate_grad function above
     #      In this we will implement the following steps:
