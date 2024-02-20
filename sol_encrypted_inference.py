@@ -15,22 +15,31 @@ from efficient_regression.utils import next_power_of_2, encrypt_weights, mat_to_
 CT = openfhe.Ciphertext
 CC = openfhe.CryptoContext
 
+
 def predict(
-    cc: CC,
-    ct_X: CT,
-    ctThetas,
-    row_size: int,
-    col_sum_keymap: Dict,
-    cheb_range_start: float,
-    cheb_range_end: float,
-    cheb_poly_degree: int,
+        cc: CC,
+        ct_X: CT,
+        ctThetas,
+        row_size: int,
+        col_sum_keymap: Dict,
+        cheb_range_start: float,
+        cheb_range_end: float,
+        cheb_poly_degree: int,
 ) -> List:
+    ################################################
+    # Exe:
+    #     implement the dot-product to generate the logits via:
+    #     - hadamard product
+    #     - EvalSumCols
+    #     cc.EvalLogistic() to generate the prediction
+    ################################################
     logits = matrix_vector_product_row(cc, col_sum_keymap, ct_X, ctThetas, row_size)
 
     # Line 5/6
     preds = cc.EvalLogistic(logits, cheb_range_start, cheb_range_end, cheb_poly_degree)
 
     return preds
+
 
 def repeat_and_encrypt_weights(
         cc: CC,
@@ -39,6 +48,13 @@ def repeat_and_encrypt_weights(
         num_slots: int,
         kp: openfhe.KeyPair
 ):
+    ################################################
+    # Exe: test your understanding of the repeated packing!
+    #      1) pad the trained_weights vector
+    #      2) repeat the weight across the number-of-slots
+    #      3) pack the plaintext
+    #      4) encrypt
+    ################################################
     padded_weights = trained_weights + [0] * (padded_row_size - len(trained_weights))
     repeated_weights_vec = padded_weights * (num_slots // padded_row_size)
     return cc.Encrypt(
@@ -47,23 +63,17 @@ def repeat_and_encrypt_weights(
     )
 
 
-
 def load_data(x_file, y_file) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     Xs = pd.read_csv(x_file).to_numpy()
     ys = pd.read_csv(y_file).to_numpy()
     return Xs, ys, Xs, ys
 
-def decrypt_predictions(cc, ct, kp):
-    return
-
 
 if __name__ == '__main__':
     # Trained in-the-clear using the `logreg_reference.ipynb`
 
-    trained_weights = [-0.83946494,  0.1006747 , -0.86173275,  0.41098421, -0.55124025,
-       -0.09287871, -0.03976215, -0.20657445,  0.06133055,  0.24880721]
-
-
+    trained_weights = [-0.83946494, 0.1006747, -0.86173275, 0.41098421, -0.55124025,
+                       -0.09287871, -0.03976215, -0.20657445, 0.06133055, 0.24880721]
 
     with open("efficient_regression/inference_config.yml", "r") as f:
         config = yaml.safe_load(f)
@@ -87,7 +97,6 @@ if __name__ == '__main__':
     epochs = ml_conf["epochs"]
 
     x_train, y_train, x_test, y_test = load_data(ml_conf["x_file"], ml_conf["y_file"])
-
 
     original_num_samples, original_num_features = x_train.shape
 
@@ -113,8 +122,6 @@ if __name__ == '__main__':
         kp
     )
 
-    # TODO: the issue is here with the repeated weights. I think I'm not
-    #       copying it across the batch
     ct_weights = repeat_and_encrypt_weights(
         cc,
         trained_weights,
@@ -123,8 +130,7 @@ if __name__ == '__main__':
         kp
     )
 
-
-    predictions = predict(cc,ct_x_train, ct_weights, padded_row_size,
+    predictions = predict(cc, ct_x_train, ct_weights, padded_row_size,
                           col_sum_keymap=eval_sum_col_keys,
                           cheb_range_start=config["chebyshev_params"]["lower_bound"],
                           cheb_range_end=config["chebyshev_params"]["upper_bound"],
@@ -138,4 +144,6 @@ if __name__ == '__main__':
         clear_preds.append(packed_predictions[idx])
 
     for i, (y_hat, y) in enumerate(zip(clear_preds, y_train)):
-        print(y_hat, y)
+        if i > 10:
+            break
+        print(f"Prediction: {y_hat}, Rounded: {np.round(y_hat)}, Label: {y}")
