@@ -127,6 +127,9 @@ if __name__ == '__main__':
                           cheb_poly_degree=config["chebyshev_params"]["polynomial_degree"],
                           )
 
+    if predictions is None:
+        raise Exception("You have not implemented the predict function yet")
+
     packed_preds: openfhe.Plaintext = cc.Decrypt(predictions, kp.secretKey)
     clear_preds = []
     packed_predictions = packed_preds.GetRealPackedValue()
