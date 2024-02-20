@@ -124,7 +124,7 @@ if __name__ == '__main__':
         weights, grads = apply_gradient(e_X, weights, residuals, inverse_scale, lr, len(X))
 
         ################################################
-        # Exe: it's not always realistic, but you may wish to displaty the loss
+        # Exe: it's not always realistic, but you may wish to display the loss
         ################################################
 
 
@@ -133,5 +133,8 @@ if __name__ == '__main__':
         #   - bootstrapping, which is expensive
         #   - decrypting and re-encrypting, which comes with its own tradeoffs
         #   Benchmark the two to get a feel for the timing difference
+
+        # weights.bootstrap_self()
+        # weights.recrypt_self()
         ################################################
         raise NotImplementedError("You'll want to implement the ciphertext noise reduction")
